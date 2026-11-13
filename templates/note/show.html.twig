@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ note.title }}{% endblock %}
+
+{% block body %}
+    <h1>{{ note.title }}</h1>
+
+    <p><small>
+        Créée le {{ note.createdAt|date('d/m/Y H:i') }}
+        {% if note.updatedAt %}, modifiée le {{ note.updatedAt|date('d/m/Y H:i') }}{% endif %}
+    </small></p>
+
+    <p>{{ note.content|nl2br }}</p>
+
+    <p>
+        <a href="{{ path('app_note_edit', {'id': note.id}) }}">Modifier</a>
+        <a href="{{ path('app_note_index') }}">Retour à la liste</a>
+    </p>
+
+    {{ include('note/_delete_form.html.twig') }}
+{% endblock %}
