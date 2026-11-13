@@ -181,7 +181,7 @@ Le **bind mount** : le dossier du projet apparaît dans le conteneur à la place
 
 Attention à une conséquence : **ce montage rend visible tout le dossier, y compris ce que `.dockerignore` exclut**. Un fichier `.env.local` sur votre machine n'est pas dans l'image, mais il est lu par le conteneur en cours d'exécution. De même, `docs/` et `var/` y sont visibles. `.dockerignore` protège l'image, pas le conteneur lancé avec ce montage.
 
-Autre risque connu de ce montage : sur un hôte Linux, le conteneur s'exécute en `root`, donc `var/`, `vendor/` et `.phpunit.cache` peuvent appartenir à `root` sur votre machine et demander un `sudo chown` pour être supprimés. Le fichier de la base de test, `var/test.db`, est dans le même cas.
+Autre risque connu de ce montage : sur un hôte Linux, le conteneur s'exécute en `root`, donc `var/` et `.phpunit.cache` peuvent appartenir à `root` sur votre machine et demander un `sudo chown` pour être supprimés. Le fichier de la base de test, `var/test.db`, est dans le même cas.
 
 ```yaml
       - /app/vendor

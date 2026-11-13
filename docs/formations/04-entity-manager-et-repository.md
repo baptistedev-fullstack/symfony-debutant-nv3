@@ -23,6 +23,7 @@ Le dépôt, lui, regroupe au même endroit toutes les façons de chercher une en
 - [src/Repository/NoteRepository.php](../../src/Repository/NoteRepository.php) : le dépôt et `findAllNewestFirst()`.
 - [tests/Repository/NoteRepositoryTest.php](../../tests/Repository/NoteRepositoryTest.php) : l'ordre de tri, et les dates remplies au bon moment.
 - [tests/Controller/NoteControllerTest.php](../../tests/Controller/NoteControllerTest.php) : les identifiants invalides, dans `invalidIds()`.
+- [tests/Routing/NoteRoutesTest.php](../../tests/Routing/NoteRoutesTest.php) : l'exigence de route, vérifiée par le routeur seul.
 
 ## Comment lire ce code
 
@@ -147,7 +148,12 @@ Doctrine le traduit ensuite en SQL pour le moteur utilisé, avec les vrais noms 
 SELECT n0_.id AS id_0, n0_.title AS title_1, n0_.content AS content_2, n0_.created_at AS created_at_3, n0_.updated_at AS updated_at_4 FROM note n0_ ORDER BY n0_.created_at DESC, n0_.id DESC
 ```
 
-Pourquoi le second critère ? La colonne `created_at` est un `TIMESTAMP(0)` : elle garde la seconde, sans fraction. Deux notes créées dans la même seconde ont exactement la même date, et leur ordre ne serait plus garanti. L'identifiant grandit à chaque insertion : à date égale, le plus grand est le plus récent. C'est précisément le cas de `testFindAllNewestFirst()`, qui crée « Première » puis « Seconde » à la suite, et attend `['Seconde', 'Première']`.
+Pourquoi le second critère ? La colonne `created_at` est un `TIMESTAMP(0)` : elle garde la seconde, sans fraction. Deux notes créées dans la même seconde ont exactement la même date, et leur ordre ne serait plus garanti. L'identifiant grandit à chaque insertion : à date égale, le plus grand est le plus récent.
+
+Chaque critère a son test dans [tests/Repository/NoteRepositoryTest.php](../../tests/Repository/NoteRepositoryTest.php) :
+
+- `testFindAllNewestFirst()` crée « Récente », puis « Ancienne », dont il recule la date d'un jour avec `setCreatedAt()`. L'appel se place après `persist()`, qui vient de remplir la date avec `onPrePersist()`, et avant `flush()`, qui l'écrit en base. L'ordre des identifiants et celui des dates s'opposent : seul le tri par date donne `['Récente', 'Ancienne']`. `testListShowsNewestFirst()` fait le même essai sur la page de liste.
+- `testFindAllNewestFirstBreaksTiesById()` donne la même date, à la seconde près, à « Premier » puis à « Second », et attend `['Second', 'Premier']`. Sans `addOrderBy('n.id', 'DESC')`, SQLite les rend dans l'autre ordre et le test échoue.
 
 ### De `{id}` à un objet `Note`
 
@@ -189,7 +195,9 @@ ERROR:  value "99999999999" is out of range for type integer
 
 Doctrine transformerait ces refus en exception, et la page afficherait une erreur 500 : une panne du serveur, pour une simple faute de frappe dans l'URL. Avec l'exigence, le routeur ne trouve aucune route qui correspond, et répond 404 **avant** la moindre requête SQL. C'est la bonne réponse : cette page n'existe pas.
 
-SQLite, plus tolérant, renverrait simplement « aucune ligne ». C'est un cas où les tests sur SQLite ne suffiraient pas à voir le problème. Le fournisseur `invalidIds()` de [tests/Controller/NoteControllerTest.php](../../tests/Controller/NoteControllerTest.php) vérifie quand même chaque cas, `/note/abc`, `/note/0`, `/note/99999999999`, `/note/abc/edit` et une note inexistante, `/note/999` : tous doivent répondre 404.
+SQLite, plus tolérant, renverrait simplement « aucune ligne ». C'est un cas où les tests sur SQLite ne suffiraient pas à voir le problème. Le fournisseur `invalidIds()` de [tests/Controller/NoteControllerTest.php](../../tests/Controller/NoteControllerTest.php) vérifie que chaque cas répond 404 : `/note/abc`, `/note/0`, `/note/99999999999`, `/note/abc/edit` et une note inexistante, `/note/999`. Mais sur SQLite, ces 404 arriveraient aussi sans l'exigence : ce test ne la prouve pas.
+
+C'est [tests/Routing/NoteRoutesTest.php](../../tests/Routing/NoteRoutesTest.php) qui la prouve. Il ne fait aucune requête HTTP et ne touche pas la base : il demande au routeur, avec `match()`, quelle route correspond à un chemin. Pour `/note/abc`, `/note/0`, `/note/99999999999`, `/note/0123` et `/note/abc/edit`, le routeur lève `ResourceNotFoundException` : aucune route. Pour `/note/999999999`, le plus grand identifiant accepté, il répond `app_note_show`. Retirez l'exigence des trois routes : ce test échoue, alors que `invalidIds()` passe toujours.
 
 Les deux 404 n'ont pas la même origine, et le journal des tests le montre quand on lance `php bin/phpunit` :
 

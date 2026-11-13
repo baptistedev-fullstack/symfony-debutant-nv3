@@ -49,6 +49,8 @@ Le contrôleur porte `#[Route('/note')]` sur la classe : ce préfixe s'ajoute à
 php bin/console debug:router
 ```
 
+Extrait de la sortie, limité aux routes du projet : en environnement `dev`, la liste commence aussi par `_preview_error`, une route de Symfony pour prévisualiser les pages d'erreur.
+
 ```text
   app_note_index    GET        /note
   app_note_new      GET|POST   /note/new
@@ -66,7 +68,7 @@ php bin/console debug:router
 | `app_note_edit` | `edit()` | Affiche le formulaire rempli | Traite le formulaire envoyé |
 | `app_note_delete` | `delete()` | Voir `app_note_show` | Supprime la note |
 
-`app_note_show` et `app_note_delete` ont le **même chemin**, `/note/{id}`. C'est la méthode HTTP qui les départage : `GET` affiche, `POST` supprime. Un lien, qui fait toujours un `GET`, ne peut donc jamais supprimer une note. `testDeleteWithGetIsNotAllowed()` le vérifie : un `GET /note/{id}` affiche la note et la laisse en base. Une autre méthode, comme `PUT /note/3`, ne correspond à aucune des deux et reçoit une 405, comme vu au [premier niveau](https://github.com/baptistedev-fullstack/symfony-debutant-nv1/blob/main/docs/formations/03-routage.md).
+`app_note_show` et `app_note_delete` ont le **même chemin**, `/note/{id}`. C'est la méthode HTTP qui les départage : `GET` affiche, `POST` supprime. Un lien, qui fait toujours un `GET`, ne peut donc jamais supprimer une note. `testDeleteWithGetIsNotAllowed()` le vérifie : un `GET /note/{id}` affiche la note et la laisse en base. Une autre méthode, comme `DELETE /note/3` ou `PUT /note/3`, ne correspond à aucune des deux et reçoit une 405 : le même test envoie un `DELETE` et vérifie la 405 et la note toujours en base. Ce fonctionnement vient du routeur, comme vu au [premier niveau](https://github.com/baptistedev-fullstack/symfony-debutant-nv1/blob/main/docs/formations/03-routage.md).
 
 `new()` et `edit()` acceptent `GET` et `POST` sur la même URL : le même code affiche le formulaire, puis le traite quand il revient.
 

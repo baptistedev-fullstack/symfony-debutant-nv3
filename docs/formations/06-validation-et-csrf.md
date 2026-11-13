@@ -20,12 +20,13 @@ Tout ce qui arrive du navigateur peut être faux, par erreur ou par malveillance
 
 - [src/Entity/Note.php](../../src/Entity/Note.php) : les quatre contraintes et leurs messages.
 - [src/Controller/NoteController.php](../../src/Controller/NoteController.php) : `isValid()` et `isCsrfTokenValid()`.
+- [src/Form/NoteType.php](../../src/Form/NoteType.php) : le message, en français, d'un jeton CSRF refusé.
 - [config/packages/csrf.yaml](../../config/packages/csrf.yaml) : la protection CSRF du formulaire.
 - [config/packages/validator.yaml](../../config/packages/validator.yaml) : la configuration du Validator, laissée telle que la recette l'a écrite.
 - [templates/note/_delete_form.html.twig](../../templates/note/_delete_form.html.twig) : le jeton de suppression.
 - [templates/note/show.html.twig](../../templates/note/show.html.twig) et [templates/note/index.html.twig](../../templates/note/index.html.twig) : l'échappement et `nl2br`.
 - [tests/Entity/NoteValidationTest.php](../../tests/Entity/NoteValidationTest.php) : les contraintes testées seules.
-- [tests/Controller/NoteControllerTest.php](../../tests/Controller/NoteControllerTest.php) : le 422, le jeton faux et l'échappement, vus du navigateur.
+- [tests/Controller/NoteControllerTest.php](../../tests/Controller/NoteControllerTest.php) : le 422, l'origine étrangère, le jeton faux ou absent et l'échappement, vus du navigateur.
 
 ## Comment lire ce code
 
@@ -69,13 +70,15 @@ SQLite, lui, ne fait pas respecter la longueur d'un `VARCHAR` : il accepterait l
 
 Le contenu est un `TEXT`, sans limite côté base. La limite de 10 000 caractères est un choix de l'application, pour qu'une note reste une note.
 
-### `normalizer: 'trim'`
+### Les espaces : le formulaire, puis `normalizer: 'trim'`
 
-Un titre fait de trois espaces, `"   "`, n'est pas vide pour PHP : c'est une chaîne de trois caractères. Sans normaliseur, `NotBlank` l'accepterait, et la liste afficherait une note sans titre visible.
+Un titre fait de trois espaces, `"   "`, n'est pas vide pour PHP : c'est une chaîne de trois caractères. Accepté, il donnerait dans la liste une note sans titre visible. Deux mécanismes s'en occupent, l'un après l'autre.
 
-`normalizer: 'trim'` dit à `NotBlank` d'appliquer la fonction `trim()` à la valeur **avant de la vérifier**. `trim("   ")` donne `""`, qui est vide : la saisie est refusée. Le cas est testé dans `invalidSubmissions()` sous le nom `titre fait d'espaces`.
+**Le formulaire retire d'abord les espaces.** Chaque champ du composant Form a l'option `trim`, qui vaut `true` par défaut (elle est définie dans `FormType`, le type dont héritent tous les champs). Avant de remplir la `Note`, le formulaire retire les espaces au début et à la fin de chaque valeur envoyée. Par le formulaire, `"  Courses  "` est donc enregistré `"Courses"`, et `"   "` devient une chaîne vide, que `NotBlank` refuse comme n'importe quel champ vide. `Length` compte aussi la valeur déjà nettoyée.
 
-Le normaliseur ne modifie pas la valeur enregistrée. Un titre `"  Courses  "` est accepté et stocké tel quel, avec ses espaces. `Length`, qui n'a pas de normaliseur, compte aussi ces espaces.
+**`normalizer: 'trim'` est le filet de sécurité de l'entité.** Il dit à `NotBlank` d'appliquer la fonction `trim()` à la valeur **avant de la vérifier**, sans modifier la valeur elle-même. Il sert quand une note n'arrive pas par le formulaire : une commande, une API, un test. Là, rien n'a retiré les espaces, et `trim("   ")`, qui donne `""`, permet quand même de refuser le titre.
+
+Les deux tests ne vérifient donc pas la même chose. Le cas `titre fait d'espaces` de `invalidSubmissions()`, dans le test du contrôleur, passe par le formulaire : il réussirait même sans le normaliseur. C'est le même cas dans [tests/Entity/NoteValidationTest.php](../../tests/Entity/NoteValidationTest.php), qui donne la `Note` directement au Validator, qui prouve le normaliseur : retirez `normalizer: 'trim'` du titre, et c'est ce test-là qui échoue.
 
 ### Le 422
 
@@ -146,7 +149,19 @@ L'essai a été fait en envoyant le même formulaire valide à `/note/new` avec 
 | `Origin: https://evil.example` | 422 |
 | Aucun de ces en-têtes | 422 |
 
-Dans les cas refusés, le message affiché est `The CSRF token is invalid. Please try to resubmit the form.` Il est en anglais : ce projet n'installe pas de traductions. C'est une limite connue de ce niveau. Une personne honnête ne le voit qu'en envoyant le formulaire depuis une autre adresse que celle du site, ou avec un navigateur qui n'envoie aucun de ces en-têtes.
+Dans les cas refusés, le formulaire est réaffiché avec un 422 et le message `Le formulaire a expiré, réessayez.`, au-dessus des champs. Ce message vient de [src/Form/NoteType.php](../../src/Form/NoteType.php) :
+
+```php
+$resolver->setDefaults([
+    'data_class' => Note::class,
+    // Le message par défaut est en anglais ; le projet n'installe pas de traductions.
+    'csrf_message' => 'Le formulaire a expiré, réessayez.',
+]);
+```
+
+`csrf_message` est une option de formulaire ajoutée par la protection CSRF du composant Form. Sa valeur par défaut est `The CSRF token is invalid. Please try to resubmit the form.` : en anglais, puisque ce projet n'installe pas de traductions. Comme pour les contraintes, le projet donne donc son propre message. Il reprend la formule du bouton de suppression : une personne honnête ne le voit qu'en envoyant le formulaire depuis une autre adresse que celle du site, ou avec un navigateur qui n'envoie aucun de ces en-têtes, et réessayer depuis la page du site suffit.
+
+`testForeignOriginIsRejectedWithAFrenchMessage()` envoie un formulaire valide avec l'en-tête `Origin: https://evil.example`, et vérifie le 422, ce message, et qu'aucune note n'a été créée.
 
 L'attribut `data-controller="csrf-protection"` sert à un petit script JavaScript que la recette propose dans les projets qui utilisent Stimulus. Ce projet n'a pas de JavaScript : l'attribut est sans effet, et la vérification par les en-têtes suffit.
 
@@ -174,7 +189,7 @@ if ($this->isCsrfTokenValid('delete'.$note->getId(), $request->getPayload()->get
 
 Le numéro dans l'identifiant lie le jeton à **une** note : le jeton de la note 3 ne permet pas de supprimer la note 4.
 
-Le code généré par `make:crud` ne faisait rien quand le jeton était faux : il redirigeait vers la liste, sans un mot, et la note restait là. La branche `else` a été ajoutée pour que l'échec se voie. Le message parle de formulaire expiré, parce que c'est la cause la plus probable pour une personne honnête : une session terminée entre l'affichage de la page et le clic. `testDeleteWithAnInvalidTokenKeepsTheNote()` envoie le jeton `faux`, et vérifie le message et la note toujours en base.
+Le code généré par `make:crud` ne faisait rien quand le jeton était faux : il redirigeait vers la liste, sans un mot, et la note restait là. La branche `else` a été ajoutée pour que l'échec se voie. Le message parle de formulaire expiré, parce que c'est la cause la plus probable pour une personne honnête : une session terminée entre l'affichage de la page et le clic. `testDeleteWithAnInvalidTokenKeepsTheNote()` envoie le jeton `faux`, et `testDeleteWithoutTokenKeepsTheNote()` n'en envoie aucun. Les deux vérifient le message et la note toujours en base.
 
 ### L'échappement de Twig
 
@@ -227,7 +242,8 @@ Montre la configuration CSRF retenue, dont la liste des jetons sans état.
 
 - Le navigateur aide, le serveur décide : seule la validation côté serveur protège.
 - Les contraintes vivent sur l'entité et s'appliquent quel que soit le chemin d'arrivée.
-- `normalizer: 'trim'` refuse un texte fait d'espaces, sans modifier la valeur enregistrée.
+- Le formulaire retire les espaces autour de chaque saisie ; `normalizer: 'trim'` refuse un texte fait d'espaces même quand il n'est pas passé par le formulaire.
 - Un formulaire invalide est réaffiché avec un 422, posé par `render()`.
 - Le jeton CSRF du formulaire est sans état et vérifie l'origine ; celui de la suppression est aléatoire et gardé en session.
+- L'option `csrf_message` donne au formulaire un message de refus en français.
 - Twig échappe tout ; `nl2br` échappe d'abord, puis ajoute les `<br />`.

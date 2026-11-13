@@ -70,7 +70,7 @@ Suivez une vraie requête, l'envoi du formulaire de création `POST /note/new`, 
 | 3 | [src/Controller/NoteController.php](../../src/Controller/NoteController.php) | Le préfixe `#[Route('/note')]`, puis la route `app_note_new`, qui accepte `POST` ; Symfony fournit `$request` et `$entityManager` |
 | 4 | [src/Form/NoteType.php](../../src/Form/NoteType.php) | `createForm()` construit le formulaire : les champs `title` et `content`, liés à `Note` par `data_class` |
 | 5 | [config/packages/csrf.yaml](../../config/packages/csrf.yaml) | `handleRequest()` lit `note[title]`, `note[content]` et `note[_token]` ; le jeton `submit` est validé par l'origine de la requête |
-| 6 | [src/Entity/Note.php](../../src/Entity/Note.php) | `setTitle()` et `setContent()` reçoivent la saisie ; `isValid()` applique les quatre contraintes `#[Assert\...]` |
+| 6 | [src/Entity/Note.php](../../src/Entity/Note.php) | `setTitle()` et `setContent()` reçoivent la saisie, sans les espaces autour, que le formulaire a retirés ; `isValid()` applique les quatre contraintes `#[Assert\...]` |
 | 7 | [src/Controller/NoteController.php](../../src/Controller/NoteController.php) | `persist($note)` : aucune requête encore, mais `onPrePersist()` remplit `createdAt` |
 | 8 | [src/Entity/Note.php](../../src/Entity/Note.php) | Les attributs `#[ORM\...]` disent à Doctrine dans quelles colonnes écrire |
 | 9 | [config/packages/doctrine.yaml](../../config/packages/doctrine.yaml) | `flush()` ouvre la connexion décrite par `DATABASE_URL` |

@@ -61,7 +61,7 @@ Les règles de saisie :
 | Titre | Obligatoire, pas seulement des espaces, 120 caractères au plus | `Le titre est obligatoire.` ou `Le titre ne doit pas dépasser 120 caractères.` |
 | Contenu | Obligatoire, pas seulement des espaces, 10 000 caractères au plus | `Le contenu est obligatoire.` ou `Le contenu ne doit pas dépasser 10000 caractères.` |
 
-Une saisie refusée réaffiche le formulaire avec un statut 422. Un identifiant invalide dans l'URL, comme `/note/abc`, `/note/0` ou `/note/99999999999`, donne une 404.
+Une saisie refusée réaffiche le formulaire avec un statut 422. Un formulaire refusé par la protection CSRF aussi, avec le message `Le formulaire a expiré, réessayez.` Un identifiant invalide dans l'URL, comme `/note/abc`, `/note/0` ou `/note/99999999999`, donne une 404.
 
 ## Limites connues
 
@@ -69,7 +69,6 @@ Elles sont assumées à ce niveau :
 
 - Pas de pagination : la liste affiche toutes les notes. Pas de données d'exemple non plus. Les deux arrivent en Debutant-Nv5.
 - Le formulaire est celui généré par `make:crud`, sans thème ni type personnalisé : le composant Form est étudié en Debutant-Nv4.
-- Si le jeton CSRF du formulaire est refusé, son message reste en anglais : le projet n'installe pas de traductions. Voir [la fiche sur la validation et le CSRF](docs/formations/06-validation-et-csrf.md).
 - Les tests tournent sur SQLite, pas sur PostgreSQL : la migration est vérifiée par la CI seulement. Voir [la fiche sur les tests](docs/formations/07-tests-avec-base-de-donnees.md).
 
 ## Documentation

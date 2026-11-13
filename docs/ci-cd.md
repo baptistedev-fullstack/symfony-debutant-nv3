@@ -75,11 +75,11 @@ Le prix à payer : les mises à jour ne sont pas automatiques, et il faut change
     persist-credentials: false
 ```
 
-Par défaut, `actions/checkout` récupère le code **et** enregistre le `GITHUB_TOKEN` dans la configuration Git du dossier, `.git/config`, pour que les étapes suivantes puissent lancer `git push`. Le jeton reste alors sur le disque pendant tout le job : toute commande lancée ensuite peut le lire, y compris un script d'une dépendance installée par `composer install`.
+Par défaut, `actions/checkout` récupère le code **et** garde le `GITHUB_TOKEN` pour que les étapes suivantes puissent lancer `git fetch` ou `git push`. Depuis la version 6, le jeton n'est plus écrit directement dans `.git/config` : il est rangé dans un fichier à part, sous `$RUNNER_TEMP`, le dossier temporaire du runner, et la configuration Git locale du dépôt pointe vers ce fichier. Le jeton reste quand même sur le disque pendant tout le job : toute étape lancée ensuite peut le lire, y compris un script d'une dépendance installée par `composer install`.
 
 Aucune étape de ce workflow n'a besoin de Git après le `checkout`. `persist-credentials: false` fait donc récupérer le code sans laisser le jeton derrière. Même limité à la lecture par `permissions`, un jeton qu'on ne laisse pas traîner ne peut pas fuiter.
 
-Le job `docker` est concerné aussi : le bind mount `.:/app` rend tout le dossier visible dans le conteneur, `.git/` compris.
+Les deux jobs utilisent la même option, pour la même raison : aucun n'a besoin du jeton après le `checkout`.
 
 ## Le job `quality`
 
@@ -129,7 +129,7 @@ Database
  [SKIPPED] The database was not checked for synchronicity.
 ```
 
-Cette commande tourne sans aucune base grâce à `serverVersion=16` dans `DATABASE_URL` : Doctrine connaît le moteur sans s'y connecter. Sans cette option, elle échouerait sur `Connection refused`, comme le montre [la fiche sur la connexion](formations/02-connexion-et-postgresql.md).
+Cette commande tourne sans aucune base grâce à `serverVersion=16` dans `DATABASE_URL` : Doctrine connaît le moteur sans s'y connecter. Sans `serverVersion`, elle échouerait sur `Connection refused`, comme le montre [la fiche sur la connexion](formations/02-connexion-et-postgresql.md).
 
 ### Pourquoi `pdo_sqlite`
 

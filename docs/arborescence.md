@@ -140,6 +140,7 @@ Pour les fichiers communs à tous les projets, voir [la fiche du premier niveau]
 | [Controller/NoteControllerTest.php](../tests/Controller/NoteControllerTest.php) | Les tests des pages | `make:crud`, puis réécrit |
 | [Entity/NoteValidationTest.php](../tests/Entity/NoteValidationTest.php) | Les tests des contraintes | `make:test`, puis complété |
 | [Repository/NoteRepositoryTest.php](../tests/Repository/NoteRepositoryTest.php) | Les tests du dépôt et des rappels | `make:test`, puis complété |
+| [Routing/NoteRoutesTest.php](../tests/Routing/NoteRoutesTest.php) | Les tests des exigences de route, sans la base | `make:test`, puis complété |
 | [Docs/DocsConsistencyTest.php](../tests/Docs/DocsConsistencyTest.php) | Les tests de cohérence de la documentation | Repris de Debutant-Nv2, puis complété |
 
 ## Dossiers générés

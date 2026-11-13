@@ -173,7 +173,7 @@ L'état général, la liste détaillée avec les dates d'exécution, et la quest
 symfony console doctrine:schema:validate
 ```
 
-Vérifie le mapping, puis compare la base au mapping. Deux `[OK]` veulent dire qu'aucune migration ne manque.
+Vérifie le mapping, puis compare la base au mapping. Deux `[OK]` veulent dire que le mapping est valide et que la base lui correspond. Seul `doctrine:migrations:up-to-date` dit qu'aucune migration n'attend d'être jouée.
 
 ```bash
 symfony console doctrine:migrations:migrate prev

@@ -149,7 +149,7 @@ Le « qui a changé » compte : si vous ouvrez le formulaire de modification et 
 
 [tests/Repository/NoteRepositoryTest.php](../../tests/Repository/NoteRepositoryTest.php) vérifie les deux : `testPersistSetsCreatedAtAndNotUpdatedAt()` et `testUpdateSetsUpdatedAt()`.
 
-`make:entity` a aussi généré `setCreatedAt()` et `setUpdatedAt()`. Ils sont restés, mais le code n'en a pas besoin : appeler `setCreatedAt()` avant le `persist()` ne servirait à rien, puisque `onPrePersist()` écrase la valeur.
+`make:entity` a aussi généré `setCreatedAt()` et `setUpdatedAt()`. Ils sont restés, mais l'application n'en a pas besoin : appeler `setCreatedAt()` avant le `persist()` ne servirait à rien, puisque `onPrePersist()` écrase la valeur. Les tests du tri s'en servent, eux, **après** le `persist()`, pour reculer une date : voir [la fiche 4](04-entity-manager-et-repository.md).
 
 ### Ce que l'entité ne contient pas
 

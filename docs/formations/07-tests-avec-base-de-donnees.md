@@ -6,15 +6,16 @@ Les niveaux précédents ont présenté [les tests fonctionnels](https://github.
 
 Les tests de ce projet n'utilisent **pas** PostgreSQL. Ils utilisent **SQLite**, un moteur de base de données qui tient dans un simple fichier et ne demande aucun serveur. Ici, ce fichier est `var/test.db`. Avant chaque test qui touche la base, ce fichier est vidé et le schéma recréé.
 
-| Classe de test | Base de départ | Tests |
+| Classe de test | Classe parente | Tests |
 |---|---|---|
-| `NoteControllerTest` | `WebTestCase` | 21 |
+| `NoteControllerTest` | `WebTestCase` | 24 |
 | `NoteValidationTest` | `KernelTestCase` | 6 |
+| `NoteRoutesTest` | `KernelTestCase` | 6 |
 | `DocsConsistencyTest` | `TestCase` | 5 |
-| `NoteRepositoryTest` | `KernelTestCase` | 4 |
+| `NoteRepositoryTest` | `KernelTestCase` | 5 |
 | `DatabaseConfigTest` | `KernelTestCase` | 2 |
 
-`NoteValidationTest` ne touche pas la base : il valide des objets `Note` en mémoire. `DatabaseConfigTest` la regarde sans y écrire. Les deux autres y écrivent.
+Soit 48 tests en tout. `NoteValidationTest` ne touche pas la base : il valide des objets `Note` en mémoire. `NoteRoutesTest` non plus : il n'interroge que le routeur. `DatabaseConfigTest` la regarde sans y écrire. `NoteControllerTest` et `NoteRepositoryTest` y écrivent.
 
 ## Pourquoi ça existe
 
@@ -33,6 +34,7 @@ Le parcours de formation l'autorise explicitement au palier Debutant. Il a un pr
 - [tests/Config/DatabaseConfigTest.php](../../tests/Config/DatabaseConfigTest.php) : le garde-fou, qui échoue si les tests ne tournent pas sur SQLite.
 - [tests/ResetDatabaseTrait.php](../../tests/ResetDatabaseTrait.php) : la remise à zéro avant chaque test.
 - [tests/Repository/NoteRepositoryTest.php](../../tests/Repository/NoteRepositoryTest.php) et [tests/Controller/NoteControllerTest.php](../../tests/Controller/NoteControllerTest.php) : les tests qui écrivent en base.
+- [tests/Routing/NoteRoutesTest.php](../../tests/Routing/NoteRoutesTest.php) : un test qui prouve sans la base ce que SQLite ne montre pas.
 - [config/packages/doctrine.yaml](../../config/packages/doctrine.yaml) : le réglage `dbname_suffix` de l'environnement `test`.
 - [compose.yaml](../../compose.yaml) : la variable `DATABASE_URL` du conteneur, au cœur du piège.
 
@@ -225,8 +227,8 @@ SQLite fait tourner le même code, mais ce n'est pas le même moteur. Ce projet 
 | Sujet | PostgreSQL | SQLite | Conséquence |
 |---|---|---|---|
 | La migration | Son SQL est du PostgreSQL | Ne la comprend pas | Les tests ne prouvent pas que la migration est juste |
-| `/note/abc` sans exigence de route | Erreur `invalid input syntax for type integer`, donc une 500 | Aucune ligne, donc une 404 | Le danger est invisible en test, voir [la fiche 4](04-entity-manager-et-repository.md) |
-| Un titre de 121 caractères sans `Length` | Erreur `value too long`, donc une 500 | Accepté | Idem, voir [la fiche 6](06-validation-et-csrf.md) |
+| `/note/abc` sans exigence de route | Erreur `invalid input syntax for type integer`, donc une 500 | Aucune ligne, donc une 404 | La 404 d'un test HTTP ne prouve pas l'exigence : `NoteRoutesTest` la vérifie sur le routeur, voir [la fiche 4](04-entity-manager-et-repository.md) |
+| Un titre de 121 caractères sans `Length` | Erreur `value too long`, donc une 500 | Accepté | La 500 est invisible en test ; le 422 attendu prouve que `Length` arrête la saisie, voir [la fiche 6](06-validation-et-csrf.md) |
 | Les types de colonnes | `TIMESTAMP(0)`, `TEXT` | `DATETIME`, `CLOB` | Les tests ne voient pas les vrais types |
 
 Pour les deux erreurs, le code a été écrit pour que PostgreSQL ne les voie jamais : l'exigence de route et la contrainte `Length` arrêtent la saisie avant la base. Les tests vérifient ce comportement, qui est le même sur les deux moteurs.
@@ -243,6 +245,7 @@ Au palier Junior, les tests eux-mêmes tourneront sur PostgreSQL, avec un servic
 php bin/console make:test KernelTestCase 'Repository\NoteRepositoryTest'
 php bin/console make:test KernelTestCase 'Config\DatabaseConfigTest'
 php bin/console make:test KernelTestCase 'Entity\NoteValidationTest'
+php bin/console make:test KernelTestCase 'Routing\NoteRoutesTest'
 ```
 
 Génèrent les squelettes de test, comme au niveau précédent. Le nom de la classe s'écrit avec son sous-dossier et un `\`, entre guillemets simples pour le shell. `NoteControllerTest` vient de `make:crud`, voir [la fiche 5](05-crud-genere.md).
