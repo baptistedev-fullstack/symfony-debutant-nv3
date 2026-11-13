@@ -109,6 +109,19 @@ final class NoteControllerTest extends WebTestCase
         self::assertCount(0, $this->manager->getRepository(Note::class)->findAll());
     }
 
+    public function testForeignOriginIsRejectedWithAFrenchMessage(): void
+    {
+        $this->client->request('POST', '/note/new', ['note' => [
+            'title' => 'Piège',
+            'content' => 'x',
+            '_token' => 'csrf-token',
+        ]], [], ['HTTP_ORIGIN' => 'https://evil.example']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('main', 'Le formulaire a expiré, réessayez.');
+        self::assertCount(0, $this->manager->getRepository(Note::class)->findAll());
+    }
+
     public function testShowNote(): void
     {
         $note = $this->createNote('Courses', 'Pain et lait');
@@ -139,6 +152,18 @@ final class NoteControllerTest extends WebTestCase
             self::assertResponseIsSuccessful();
             self::assertStringNotContainsString('<script>', $this->client->getResponse()->getContent());
         }
+    }
+
+    public function testShowDisplaysTheUpdateDate(): void
+    {
+        $note = $this->createNote('Avant', 'x');
+        $note->setTitle('Après');
+        $this->manager->flush();
+
+        $this->client->request('GET', '/note/'.$note->getId());
+
+        $dates = $this->client->getCrawler()->filter('main small')->text();
+        self::assertMatchesRegularExpression('#^Créée le \d{2}/\d{2}/\d{4} \d{2}:\d{2}, modifiée le \d{2}/\d{2}/\d{4} \d{2}:\d{2}$#', $dates);
     }
 
     #[DataProvider('invalidIds')]

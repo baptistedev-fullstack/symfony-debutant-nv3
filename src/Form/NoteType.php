@@ -22,6 +22,8 @@ class NoteType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Note::class,
+            // Le message par défaut est en anglais ; le projet n'installe pas de traductions.
+            'csrf_message' => 'Le formulaire a expiré, réessayez.',
         ]);
     }
 }

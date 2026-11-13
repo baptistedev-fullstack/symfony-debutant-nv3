@@ -7,7 +7,7 @@
 
     <p><small>
         Créée le {{ note.createdAt|date('d/m/Y H:i') }}
-        {% if note.updatedAt %}, modifiée le {{ note.updatedAt|date('d/m/Y H:i') }}{% endif %}
+        {%- if note.updatedAt %}, modifiée le {{ note.updatedAt|date('d/m/Y H:i') }}{% endif %}
     </small></p>
 
     <p>{{ note.content|nl2br }}</p>
