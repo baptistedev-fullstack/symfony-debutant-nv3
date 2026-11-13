@@ -16,6 +16,9 @@
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
         <server name="DATABASE_URL" value="sqlite:///%kernel.project_dir%/var/test.db" force="true" />
+        <!-- Indispensable dans le conteneur : compose y définit une vraie variable DATABASE_URL,
+             rangée dans $_ENV, que Symfony lit avant $_SERVER. Sans cette ligne, les tests
+             tourneraient sur PostgreSQL. Voir docs/formations/07-tests-avec-base-de-donnees.md. -->
         <env name="DATABASE_URL" value="sqlite:///%kernel.project_dir%/var/test.db" force="true" />
     </php>
 
