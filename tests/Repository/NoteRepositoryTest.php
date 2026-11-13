@@ -55,6 +55,21 @@ class NoteRepositoryTest extends KernelTestCase
         $this->assertSame(['Récente', 'Ancienne'], $titles);
     }
 
+    public function testFindAllNewestFirstBreaksTiesById(): void
+    {
+        $sameSecond = new \DateTimeImmutable('2026-01-01 10:00:00');
+        foreach (['Premier', 'Second'] as $title) {
+            $note = (new Note())->setTitle($title)->setContent('x');
+            $this->entityManager->persist($note);
+            $note->setCreatedAt($sameSecond);
+        }
+        $this->entityManager->flush();
+
+        $titles = array_map(static fn (Note $note): ?string => $note->getTitle(), $this->repository->findAllNewestFirst());
+
+        $this->assertSame(['Second', 'Premier'], $titles);
+    }
+
     public function testFindAllNewestFirstOnEmptyTable(): void
     {
         $this->assertSame([], $this->repository->findAllNewestFirst());
