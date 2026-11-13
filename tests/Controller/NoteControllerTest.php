@@ -65,13 +65,17 @@ final class NoteControllerTest extends WebTestCase
 
     public function testListShowsNewestFirst(): void
     {
-        $this->createNote('Première', 'a');
-        $this->createNote('Seconde', 'b');
+        // L'ancienne note est créée en second : l'ordre des id et l'ordre des dates s'opposent.
+        $this->createNote('Récente', 'a');
+        $old = (new Note())->setTitle('Ancienne')->setContent('b');
+        $this->manager->persist($old);
+        $old->setCreatedAt(new \DateTimeImmutable('-1 day'));
+        $this->manager->flush();
 
         $this->client->request('GET', '/note');
 
-        self::assertSelectorTextContains('.notes li:first-child', 'Seconde');
-        self::assertSelectorTextContains('.notes li:last-child', 'Première');
+        self::assertSelectorTextContains('.notes li:first-child', 'Récente');
+        self::assertSelectorTextContains('.notes li:last-child', 'Ancienne');
     }
 
     public function testCreateNote(): void
@@ -187,6 +191,18 @@ final class NoteControllerTest extends WebTestCase
         self::assertCount(1, $this->manager->getRepository(Note::class)->findAll());
     }
 
+    public function testDeleteWithoutTokenKeepsTheNote(): void
+    {
+        $note = $this->createNote('À garder', 'x');
+
+        $this->client->request('POST', '/note/'.$note->getId());
+
+        self::assertResponseStatusCodeSame(303);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('[role="alert"]', 'La note n\'a pas été supprimée : le formulaire a expiré, réessayez.');
+        self::assertCount(1, $this->manager->getRepository(Note::class)->findAll());
+    }
+
     public function testDeleteWithGetIsNotAllowed(): void
     {
         $note = $this->createNote('À garder', 'x');
@@ -195,6 +211,10 @@ final class NoteControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('main', 'À garder');
+
+        $this->client->request('DELETE', '/note/'.$note->getId());
+
+        self::assertResponseStatusCodeSame(405);
         $this->manager->clear();
         self::assertCount(1, $this->manager->getRepository(Note::class)->findAll());
     }

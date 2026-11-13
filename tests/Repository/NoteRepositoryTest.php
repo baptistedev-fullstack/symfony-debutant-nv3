@@ -43,12 +43,16 @@ class NoteRepositoryTest extends KernelTestCase
 
     public function testFindAllNewestFirst(): void
     {
-        $this->createNote('Première', 'a');
-        $this->createNote('Seconde', 'b');
+        // L'ancienne note est créée en second : l'ordre des id et l'ordre des dates s'opposent.
+        $this->createNote('Récente', 'a');
+        $old = (new Note())->setTitle('Ancienne')->setContent('b');
+        $this->entityManager->persist($old);
+        $old->setCreatedAt(new \DateTimeImmutable('-1 day'));
+        $this->entityManager->flush();
 
         $titles = array_map(static fn (Note $note): ?string => $note->getTitle(), $this->repository->findAllNewestFirst());
 
-        $this->assertSame(['Seconde', 'Première'], $titles);
+        $this->assertSame(['Récente', 'Ancienne'], $titles);
     }
 
     public function testFindAllNewestFirstOnEmptyTable(): void
