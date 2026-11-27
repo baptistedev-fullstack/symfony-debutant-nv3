@@ -40,17 +40,17 @@ Les paquets Symfony n'ont pas tous le même numéro de correctif, par exemple `s
 | `doctrine/doctrine-bundle` | 3.4.1 | L'intégration de Doctrine dans Symfony : connexion, configuration, commandes `doctrine:*` |
 | `doctrine/doctrine-migrations-bundle` | 4.0.1 | Les migrations et les commandes `doctrine:migrations:*` |
 | `doctrine/orm` | 3.7.6 | L'ORM : entités, `EntityManager`, dépôts, QueryBuilder |
-| `symfony/asset` | v8.1.0 | La fonction `asset()`, qui donne l'URL de la feuille de style |
-| `symfony/console` | v8.1.11 | Les commandes `bin/console` |
+| `symfony/asset` | v8.1.12 | La fonction `asset()`, qui donne l'URL de la feuille de style |
+| `symfony/console` | v8.1.12 | Les commandes `bin/console` |
 | `symfony/dotenv` | v8.1.6 | La lecture des fichiers `.env` |
 | `symfony/flex` | v2.12.0 | Le plugin Composer qui applique les recettes |
-| `symfony/form` | v8.1.11 | Le composant Form, utilisé par le formulaire généré `NoteType` |
-| `symfony/framework-bundle` | v8.1.11 | Le cœur de Symfony : Kernel, contrôleurs, configuration |
-| `symfony/runtime` | v8.1.11 | Le démarrage de l'application depuis `public/index.php` |
+| `symfony/form` | v8.1.13 | Le composant Form, utilisé par le formulaire généré `NoteType` |
+| `symfony/framework-bundle` | v8.1.12 | Le cœur de Symfony : Kernel, contrôleurs, configuration |
+| `symfony/runtime` | v8.1.12 | Le démarrage de l'application depuis `public/index.php` |
 | `symfony/security-csrf` | v8.1.0 | Les jetons CSRF du formulaire et de la suppression |
 | `symfony/twig-bundle` | v8.1.9 | L'intégration de Twig |
-| `symfony/validator` | v8.1.11 | Les contraintes `#[Assert\...]` de l'entité |
-| `symfony/yaml` | v8.1.11 | La lecture des fichiers YAML et `lint:yaml` |
+| `symfony/validator` | v8.1.13 | Les contraintes `#[Assert\...]` de l'entité |
+| `symfony/yaml` | v8.1.13 | La lecture des fichiers YAML et `lint:yaml` |
 
 `composer.json` exige aussi deux extensions de PHP, `ext-ctype` et `ext-iconv`, présentes dans l'image Docker.
 
@@ -74,7 +74,7 @@ La seconde commande n'était pas prévue au départ : `make:crud` refuse de tour
 | Paquet | Version | Rôle |
 |---|---|---|
 | `phpunit/phpunit` | 13.4.7 | Le lancement des tests |
-| `symfony/browser-kit` | v8.1.11 | Le navigateur simulé des tests fonctionnels |
+| `symfony/browser-kit` | v8.1.13 | Le navigateur simulé des tests fonctionnels |
 | `symfony/css-selector` | v8.1.10 | Les sélecteurs CSS dans les assertions |
 | `symfony/maker-bundle` | 1.68.0 | Les commandes `make:*` qui génèrent du code |
 
